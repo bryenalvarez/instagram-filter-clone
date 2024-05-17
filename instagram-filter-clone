@@ -1,7 +1,3 @@
-"""Compstagram: Image Filters in COMP110!"""
-
-__author__ = "730655926"
-
 __template__ = "https://24s.comp110.com/static/compstagram/"
 
 
