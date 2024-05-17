@@ -1,0 +1,140 @@
+"""Compstagram: Image Filters in COMP110!"""
+
+__author__ = "730655926"
+
+__template__ = "https://24s.comp110.com/static/compstagram/"
+
+
+from .support import (
+    Color,
+    Bitmap,
+    Request,
+    Base64ImageStr,
+    bitmap_to_base64,
+    FilterSettings,
+)
+
+
+def main(request: Request) -> Base64ImageStr:
+    """Primary endpoint for to the Compstagram backend.
+    This function is called each time a new image is loaded, a filter is
+    added/removed, or a filter's amount is changed.
+    """
+    image: Bitmap = request.image
+    for filter in request.filters:
+        image = filter.process(image)
+    return bitmap_to_base64(image)
+
+
+def get_filter_types() -> list[FilterSettings]:
+    """Produces a list of default Filters users can choose from.
+
+    As you add new Filter classes, add additional instances of FilterSettings
+    to this list for them to appear in the front-end. The name must match the Filter's
+    class name and the amount represents the default intensity of a filter
+    when added to the front-end.
+    """
+    return [
+        FilterSettings(name="InvertFilter", amount=1.0),
+        FilterSettings(name="BorderFilter", amount=0.05),
+        FilterSettings(name="BrightnessFilter", amount=0.5),
+        FilterSettings(name="SaturationFilter", amount=0.0),
+    ]
+
+
+class InvertFilter:
+    """
+    The InvertFilter's process method is provided to you as an example for
+    some ideas on how to implement an image processing algorithm given an input
+    image. All of yours will also iterate through each pixel using a nested for loop,
+    and modify each pixel by applying logic and/or arithmetic to manipulate it.
+    """
+
+    amount: float
+
+    def __init__(self, amount: float):
+        self.amount = amount
+
+    def process(self, bitmap: Bitmap) -> Bitmap:
+        for row in range(bitmap.height):
+            for col in range(bitmap.width):
+                pixel = bitmap.pixels[row][col]
+                red_inverted = 255 - pixel.red
+                green_inverted = 255 - pixel.green
+                blue_inverted = 255 - pixel.blue
+                red_delta = int((red_inverted - pixel.red) * self.amount)
+                green_delta = int((green_inverted - pixel.green) * self.amount)
+                blue_delta = int((blue_inverted - pixel.blue) * self.amount)
+                pixel.red += red_delta
+                pixel.green += green_delta
+                pixel.blue += blue_delta
+
+        return bitmap
+
+
+class BorderFilter:
+    """Produce a border around the Bitmap."""
+
+    amount: float
+    color: Color
+
+    def __init__(self, amount: float):
+        """Initializes the Border filter with a thickness amount and a default color."""
+        self.amount = amount
+        self.color = Color(75, 156, 211)
+
+    def process(self, bitmap: Bitmap) -> Bitmap:
+        """Processes border thickness"""
+        borderthickness = int(bitmap.width / 2 * self.amount)
+        for row in range(bitmap.height):
+            for col in range(bitmap.width):
+                if (
+                    row < borderthickness
+                    or row >= bitmap.height - borderthickness
+                    or col < borderthickness
+                    or col >= bitmap.width - borderthickness
+                ):
+                    bitmap.pixels[row][col] = self.color
+        return bitmap
+
+
+class BrightnessFilter:
+    amount: float
+
+    def __init__(self, amount: float):
+        """Initializes the Brightness Filter"""
+        self.amount = amount
+
+    def process(self, bitmap: Bitmap) -> Bitmap:
+        """Process Brightness Filter"""
+        factorbrightness = (self.amount - 0.5) * 2.0
+        for row in range(bitmap.height):
+            for col in range(bitmap.width):
+                pixel = bitmap.pixels[row][col]
+                pixel.red = int(pixel.red + (factorbrightness * pixel.red))
+                pixel.blue = int(pixel.blue + (factorbrightness * pixel.blue))
+                pixel.green = int(pixel.green + (factorbrightness * pixel.green))
+        return bitmap
+
+
+class SaturationFilter:
+    amount: float
+
+    def __init__(self, amount: float):
+        """Initializes the Saturation Filter"""
+        self.amount = amount
+
+    def process(self, bitmap: Bitmap) -> Bitmap:
+        """Process Saturation Filter"""
+        factorsaturation = (0.5 - self.amount) * 2.0
+        for row in range(bitmap.height):
+            for col in range(bitmap.width):
+                pixel = bitmap.pixels[row][col]
+                componentaverage = (pixel.red + pixel.green + pixel.blue) // 3
+                red_delta = int((componentaverage - pixel.red) * factorsaturation)
+                green_delta = int((componentaverage - pixel.green) * factorsaturation)
+                blue_delta = int((componentaverage - pixel.blue) * factorsaturation)
+                pixel.red += red_delta
+                pixel.green += green_delta
+                pixel.blue += blue_delta
+        return bitmap
