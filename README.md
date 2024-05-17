@@ -1,8 +1,8 @@
 Key Components
 Setup:
 Updated the development container to the latest version.
-Created a new directory named ex07_compstagram.
-Copied provided support files (support.py and compstagram.py) into the directory.
+Created a new directory named Compstagram.
+
 
 Support Code:
 Color Class: Represents a digital color with red, green, and blue components.
